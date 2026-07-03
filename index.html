@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grandma's Moving Day | 益恩课堂</title>
+  <style>
+    :root {
+      --blue: #28AADC;
+      --orange: #FAB43C;
+      --bg: #F0F4F8;
+      --card-bg: rgba(255,255,255,0.75);
+      --text: #1A1A2E;
+      --text-light: #555;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    /* 背景装饰 */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      z-index: 0;
+      pointer-events: none;
+    }
+    body::before {
+      width: 300px; height: 300px;
+      background: var(--blue);
+      top: -50px; right: -80px;
+    }
+    body::after {
+      width: 250px; height: 250px;
+      background: var(--orange);
+      bottom: 10%; left: -60px;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: clamp(16px, 4vw, 40px) clamp(12px, 3vw, 24px);
+      position: relative;
+      z-index: 1;
+    }
+    /* 品牌头部 */
+    .brand {
+      font-size: 13px;
+      color: var(--blue);
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    h1 {
+      font-size: clamp(22px, 5vw, 32px);
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .subtitle {
+      font-size: clamp(14px, 3vw, 18px);
+      color: var(--text-light);
+      margin-bottom: 24px;
+    }
+    /* 音频播放器 - 玻璃态 */
+    .audio-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 20px;
+      padding: clamp(14px, 3vw, 20px);
+      margin-bottom: 28px;
+      box-shadow: 0 4px 20px rgba(40,170,220,0.1);
+    }
+    .audio-card .track-label {
+      font-size: 12px;
+      color: var(--blue);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .audio-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .play-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+    .play-btn:hover { transform: scale(1.08); }
+    .play-btn.playing { animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(40,170,220,0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(40,170,220,0); }
+    }
+    .progress-wrap {
+      flex: 1;
+      min-width: 100px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      background: #ddd;
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.1s;
+    }
+    .time-label {
+      font-size: 12px;
+      color: var(--text-light);
+      min-width: 70px;
+      text-align: right;
+    }
+    .speed-btn {
+      padding: 4px 10px;
+      border-radius: 14px;
+      border: 1.5px solid var(--blue);
+      background: transparent;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .speed-btn:hover, .speed-btn.active {
+      background: var(--blue);
+      color: #fff;
+    }
+    .skip-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1.5px solid var(--blue);
+      background: transparent;
+      color: var(--blue);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* 插图 */
+    .story-img {
+      width: 100%;
+      border-radius: 16px;
+      margin: 20px 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    /* 阅读文本 */
+    .story-text {
+      font-size: clamp(15px, 3.5vw, 18px);
+      line-height: 2;
+      margin-bottom: 16px;
+    }
+    .story-text p {
+      margin-bottom: 16px;
+    }
+    .vw {
+      color: var(--blue);
+      font-weight: 700;
+      border-bottom: 2px dashed var(--orange);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+    }
+    .vw:hover { color: var(--orange); }
+    .vw .tip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 400;
+      padding: 4px 10px;
+      border-radius: 8px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+    @media (hover: hover) {
+      .vw:hover .tip { display: block; }
+    }
+    /* 翻译按钮 */
+    .toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 14px;
+      border: 1.5px solid var(--orange);
+      background: transparent;
+      color: var(--orange);
+      font-size: 13px;
+      cursor: pointer;
+      margin: 8px 0 12px;
+      transition: all 0.2s;
+    }
+    .toggle-btn:hover { background: var(--orange); color: #fff; }
+    .translation {
+      display: none;
+      font-size: clamp(13px, 3vw, 16px);
+      color: var(--text-light);
+      background: rgba(250,180,60,0.06);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      line-height: 1.8;
+    }
+    .translation.show { display: block; animation: fadeIn 0.3s; }
+    @keyframes fadeIn {
+      from { opacity:0; transform:translateY(-6px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+    /* 词汇卡片 */
+    .vocab-section {
+      margin-top: 36px;
+    }
+    .vocab-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .vocab-title::before {
+      content: '📝';
+    }
+    .vocab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+    .vocab-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(255,255,255,0.5);
+      border-radius: 14px;
+      padding: 12px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .vocab-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(40,170,220,0.15);
+      border-color: var(--blue);
+    }
+    .vocab-card.speaking {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(40,170,220,0.2);
+    }
+    .vocab-card .speak-icon {
+      position: absolute;
+      top: 4px; right: 6px;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .vocab-card.speaking .speak-icon { opacity: 1; }
+    .vocab-card .word {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 2px;
+    }
+    .vocab-card .meaning {
+      font-size: 12px;
+      color: var(--text-light);
+    }
+    /* 移动端模态框 */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-content {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      max-width: 280px;
+      width: 85%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .modal-word {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--blue);
+    }
+    .modal-meaning {
+      font-size: 16px;
+      color: var(--text-light);
+      margin: 8px 0 16px;
+    }
+    .modal-close {
+      padding: 8px 24px;
+      border-radius: 14px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    /* 滚动渐入 */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s, transform 0.6s;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">益恩课堂 · 每日阅读</div>
+    <h1>Grandma's Moving Day</h1>
+    <div class="subtitle">奶奶的搬家日</div>
+
+    <!-- 音频播放器 -->
+    <div class="audio-card fade-in">
+      <div class="track-label">Track 02 · Grandma's Moving Day</div>
+      <div class="audio-controls">
+        <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+        <button class="skip-btn" onclick="skipTime(-5)">⏪</button>
+        <div class="progress-wrap">
+          <div class="progress-bar" id="progressBar" onclick="seekAudio(event)">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span class="time-label" id="timeLabel">0:00 / 0:00</span>
+        </div>
+        <button class="skip-btn" onclick="skipTime(5)">⏩</button>
+        <button class="speed-btn active" id="speedBtn" onclick="cycleSpeed()">1.0x</button>
+      </div>
+      <audio id="audio" src="audio.mp3" preload="auto"></audio>
+    </div>
+
+    <!-- 段落1 -->
+    <div class="fade-in">
+      <div class="story-text">
+        <p>The day had come. <span class="vw" data-word="Grandma" data-meaning="奶奶" onclick="speak(this)">Grandma</span> was <span class="vw" data-word="moving" data-meaning="搬家" onclick="speak(this)">moving</span> out of her big <span class="vw" data-word="house" data-meaning="房子" onclick="speak(this)">house</span>. I was sad. I had a lot of <span class="vw" data-word="memories" data-meaning="回忆" onclick="speak(this)">memories</span> in that house.</p>
+      </div>
+      <img class="story-img" src="image_house.png" alt="房子插图">
+      <button class="toggle-btn" onclick="toggleTrans(this)">▶ 中文翻译</button>
+      <div class="translation">那一天终于来了。奶奶要从她的大房子里搬走了。我很难过。在那所房子里，我有很多美好的回忆。</div>
+    </div>
+
+    <!-- 段落2 -->
+    <div class="fade-in">
+      <div class="story-text">
+        <p>I asked where Grandma was moving to. My dad just said, "Somewhere <span class="vw" data-word="nearby" data-meaning="附近" onclick="speak(this)">nearby</span>. Don't worry."</p>
+      </div>
+      <button class="toggle-btn" onclick="toggleTrans(this)">▶ 中文翻译</button>
+      <div class="translation">我问奶奶要搬到哪里去。爸爸只是说："就在附近。别担心。"</div>
+    </div>
+
+    <!-- 段落3 -->
+    <div class="fade-in">
+      <div class="story-text">
+        <p>But I was <span class="vw" data-word="worried" data-meaning="担心的" onclick="speak(this)">worried</span>. I spent a lot of time with Grandma. I did not want to see her any less. In fact, I wanted to see her more.</p>
+      </div>
+      <button class="toggle-btn" onclick="toggleTrans(this)">▶ 中文翻译</button>
+      <div class="translation">但我很担心。我和奶奶待在一起很长时间。我不想减少见到她的次数。事实上，我想更多地见到她。</div>
+    </div>
+
+    <!-- 段落4 -->
+    <div class="fade-in">
+      <div class="story-text">
+        <p>I could tell that no one wanted to tell me because they knew I would be sad. "It must be far away," I thought to myself.</p>
+      </div>
+      <button class="toggle-btn" onclick="toggleTrans(this)">▶ 中文翻译</button>
+      <div class="translation">我能看出来，没人想告诉我，因为他们知道我会难过。"一定是很远的地方，"我心想。</div>
+    </div>
+
+    <!-- 段落5 -->
+    <div class="fade-in">
+      <div class="story-text">
+        <p>We got all of Grandma's things in the <span class="vw" data-word="truck" data-meaning="卡车" onclick="speak(this)">truck</span>. I sat beside her in the car. We talked the whole time.</p>
+      </div>
+      <img class="story-img" src="image_grandma.png" alt="奶奶和孙女插图">
+      <button class="toggle-btn" onclick="toggleTrans(this)">▶ 中文翻译</button>
+      <div class="translation">我们把奶奶所有的东西都搬上了卡车。在车里我坐在她旁边。我们一路上都在聊天。</div>
+    </div>
+
+    <!-- 段落6-7 -->
+    <div class="fade-in">
+      <div class="story-text">
+        <p>After a while, the truck stopped. I looked out to see her new home.</p>
+        <p>It was our <span class="vw" data-word="house" data-meaning="房子" onclick="speak(this)">house</span>! Grandma was coming to live with us.</p>
+      </div>
+      <button class="toggle-btn" onclick="toggleTrans(this)">▶ 中文翻译</button>
+      <div class="translation">过了一会儿，卡车停了下来。我向外望去，看她的新家。</div>
+      <div class="translation">那是我们的房子！奶奶要搬来和我们一起住了。</div>
+    </div>
+
+    <!-- 词汇总结 -->
+    <div class="vocab-section fade-in">
+      <div class="vocab-title">Key Vocabulary · 重点词汇</div>
+      <div class="vocab-grid" id="vocabGrid">
+        <div class="vocab-card" onclick="speakCard(this,'Grandma','奶奶')">
+          <span class="speak-icon">🔊</span>
+          <div class="word">Grandma</div>
+          <div class="meaning">奶奶</div>
+        </div>
+        <div class="vocab-card" onclick="speakCard(this,'moving','搬家')">
+          <span class="speak-icon">🔊</span>
+          <div class="word">moving</div>
+          <div class="meaning">搬家</div>
+        </div>
+        <div class="vocab-card" onclick="speakCard(this,'memories','回忆')">
+          <span class="speak-icon"></span>
+          <div class="word">memories</div>
+          <div class="meaning">回忆</div>
+        </div>
+        <div class="vocab-card" onclick="speakCard(this,'nearby','附近')">
+          <span class="speak-icon">🔊</span>
+          <div class="word">nearby</div>
+          <div class="meaning">附近</div>
+        </div>
+        <div class="vocab-card" onclick="speakCard(this,'worried','担心的')">
+          <span class="speak-icon">🔊</span>
+          <div class="word">worried</div>
+          <div class="meaning">担心的</div>
+        </div>
+        <div class="vocab-card" onclick="speakCard(this,'truck','卡车')">
+          <span class="speak-icon"></span>
+          <div class="word">truck</div>
+          <div class="meaning">卡车</div>
+        </div>
+        <div class="vocab-card" onclick="speakCard(this,'house','房子')">
+          <span class="speak-icon">🔊</span>
+          <div class="word">house</div>
+          <div class="meaning">房子</div>
+        </div>
+        <div class="vocab-card" onclick="speakCard(this,'memories','回忆')">
+          <span class="speak-icon"></span>
+          <div class="word">memories</div>
+          <div class="meaning">回忆</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 移动端模态框 -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-content">
+      <div class="modal-word" id="modalWord"></div>
+      <div class="modal-meaning" id="modalMeaning"></div>
+      <button class="modal-close" onclick="closeModal()">关闭</button>
+    </div>
+  </div>
+
+  <script>
+    // 音频播放
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('playBtn');
+    const progressFill = document.getElementById('progressFill');
+    const timeLabel = document.getElementById('timeLabel');
+    const speeds = [0.5, 0.75, 1.0, 1.25, 1.5];
+    let speedIdx = 2;
+
+    function togglePlay() {
+      if (audio.paused) {
+        audio.play();
+        playBtn.textContent = '';
+        playBtn.classList.add('playing');
+      } else {
+        audio.pause();
+        playBtn.textContent = '▶';
+        playBtn.classList.remove('playing');
+      }
+    }
+
+    audio.addEventListener('timeupdate', () => {
+      const pct = (audio.currentTime / audio.duration) * 100 || 0;
+      progressFill.style.width = pct + '%';
+      timeLabel.textContent = fmtTime(audio.currentTime) + ' / ' + fmtTime(audio.duration);
+    });
+
+    function fmtTime(s) {
+      if (!s || isNaN(s)) return '0:00';
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function seekAudio(e) {
+      const bar = document.getElementById('progressBar');
+      const rect = bar.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      audio.currentTime = pct * audio.duration;
+    }
+
+    function skipTime(sec) {
+      audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + sec));
+    }
+
+    function cycleSpeed() {
+      speedIdx = (speedIdx + 1) % speeds.length;
+      audio.playbackRate = speeds[speedIdx];
+      document.getElementById('speedBtn').textContent = speeds[speedIdx] + 'x';
+    }
+
+    // 键盘快捷键
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+      if (e.code === 'ArrowLeft') skipTime(-5);
+      if (e.code === 'ArrowRight') skipTime(5);
+    });
+
+    // 翻译切换
+    function toggleTrans(btn) {
+      const trans = btn.nextElementSibling;
+      trans.classList.toggle('show');
+      btn.textContent = trans.classList.contains('show') ? '▼ 收起翻译' : '▶ 中文翻译';
+    }
+
+    // 发音（文本中词汇）
+    function speak(el) {
+      const word = el.dataset.word;
+      const utter = new SpeechSynthesisUtterance(word);
+      utter.lang = 'en-US';
+      utter.rate = 0.9;
+      speechSynthesis.speak(utter);
+    }
+
+    // 词汇卡片发音
+    function speakCard(el, word, meaning) {
+      el.classList.add('speaking');
+      const utter = new SpeechSynthesisUtterance(word);
+      utter.lang = 'en-US';
+      utter.rate = 0.9;
+      utter.onend = () => el.classList.remove('speaking');
+      speechSynthesis.speak(utter);
+      // 移动端显示模态框
+      if (!window.matchMedia('(hover: hover)').matches) {
+        document.getElementById('modalWord').textContent = word;
+        document.getElementById('modalMeaning').textContent = meaning;
+        document.getElementById('modal').classList.add('show');
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('show');
+    }
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    // 滚动渐入
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

@@ -184,6 +184,20 @@
     .modal-meaning { font-size:16px; color:var(--text-light); margin:8px 0 16px; }
     .modal-close { padding:8px 24px; border-radius:14px; background:var(--blue); color:#fff; border:none; cursor:pointer; font-size:14px; }
 
+    /* 词汇含义弹窗 */
+    .word-popup {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,0.25); z-index:100;
+      align-items:center; justify-content:center;
+    }
+    .word-popup.show { display:flex; animation: fadeIn 0.2s; }
+    .word-popup-box {
+      background:#fff; border-radius:16px; padding:20px 28px; text-align:center;
+      min-width:160px; box-shadow:0 8px 30px rgba(0,0,0,0.15);
+    }
+    .word-popup-word { font-size:20px; font-weight:700; color:var(--orange); margin-bottom:6px; }
+    .word-popup-meaning { font-size:15px; color:var(--text-light); }
+
     /* 底部署名 */
     .footer {
       text-align: center;
@@ -230,7 +244,7 @@
     <!-- 场景1：房子 -->
     <div class="story-block fade-in">
       <div class="story-text">
-        <p>The day had come. <span class="vw" data-word="Grandma" data-meaning="奶奶" onclick="speak(this)">Grandma</span> was <span class="vw" data-word="moving" data-meaning="搬家" onclick="speak(this)">moving</span> out of her big <span class="vw" data-word="house" data-meaning="房子" onclick="speak(this)">house</span>. I was sad. I had a lot of <span class="vw" data-word="memories" data-meaning="回忆" onclick="speak(this)">memories</span> in that house.</p>
+        <p>The day had come. <span class="vw" data-word="Grandma" data-meaning="奶奶" onclick="showWordMeaning(this)">Grandma</span> was <span class="vw" data-word="moving" data-meaning="搬家" onclick="showWordMeaning(this)">moving</span> out of her big <span class="vw" data-word="house" data-meaning="房子" onclick="showWordMeaning(this)">house</span>. I was sad. I had a lot of <span class="vw" data-word="memories" data-meaning="回忆" onclick="showWordMeaning(this)">memories</span> in that house.</p>
       </div>
       <img class="story-img" src="image_house.png" alt="房子插图">
       <button class="toggle-btn" onclick="toggleTrans(this)">▶ 中文翻译</button>
@@ -240,8 +254,8 @@
     <!-- 中间文本（无图） -->
     <div class="story-block fade-in">
       <div class="story-text">
-        <p>I asked where Grandma was moving to. My dad just said, "Somewhere <span class="vw" data-word="nearby" data-meaning="附近" onclick="speak(this)">nearby</span>. Don't worry."</p>
-        <p>But I was <span class="vw" data-word="worried" data-meaning="担心的" onclick="speak(this)">worried</span>. I spent a lot of time with Grandma. I did not want to see her any less. In fact, I wanted to see her more.</p>
+        <p>I asked where Grandma was moving to. My dad just said, "Somewhere <span class="vw" data-word="nearby" data-meaning="附近" onclick="showWordMeaning(this)">nearby</span>. Don't worry."</p>
+        <p>But I was <span class="vw" data-word="worried" data-meaning="担心的" onclick="showWordMeaning(this)">worried</span>. I spent a lot of time with Grandma. I did not want to see her any less. In fact, I wanted to see her more.</p>
         <p>I could tell that no one wanted to tell me because they knew I would be sad. "It must be far away," I thought to myself.</p>
       </div>
       <button class="toggle-btn" onclick="toggleTrans(this)">▶ 中文翻译</button>
@@ -251,9 +265,9 @@
     <!-- 场景2：奶奶和孙女 -->
     <div class="story-block fade-in">
       <div class="story-text">
-        <p>We got all of Grandma's things in the <span class="vw" data-word="truck" data-meaning="卡车" onclick="speak(this)">truck</span>. I sat beside her in the car. We talked the whole time.</p>
+        <p>We got all of Grandma's things in the <span class="vw" data-word="truck" data-meaning="卡车" onclick="showWordMeaning(this)">truck</span>. I sat beside her in the car. We talked the whole time.</p>
         <p>After a while, the truck stopped. I looked out to see her new home.</p>
-        <p>It was our <span class="vw" data-word="house" data-meaning="房子" onclick="speak(this)">house</span>! Grandma was coming to live with us.</p>
+        <p>It was our <span class="vw" data-word="house" data-meaning="房子" onclick="showWordMeaning(this)">house</span>! Grandma was coming to live with us.</p>
       </div>
       <img class="story-img" src="image_grandma.png" alt="奶奶和孙女插图">
       <button class="toggle-btn" onclick="toggleTrans(this)">▶ 中文翻译</button>
@@ -286,6 +300,14 @@
       <div class="modal-word" id="modalWord"></div>
       <div class="modal-meaning" id="modalMeaning"></div>
       <button class="modal-close" onclick="closeModal()">关闭</button>
+    </div>
+  </div>
+
+  <!-- 词汇含义弹窗（文本中点击单词） -->
+  <div class="word-popup" id="wordPopup">
+    <div class="word-popup-box">
+      <div class="word-popup-word" id="wordPopupWord"></div>
+      <div class="word-popup-meaning" id="wordPopupMeaning"></div>
     </div>
   </div>
 
@@ -332,10 +354,16 @@
       t.classList.toggle('show');
       btn.textContent = t.classList.contains('show') ? '▼ 收起翻译' : '▶ 中文翻译';
     }
-    function speak(el) {
-      const u=new SpeechSynthesisUtterance(el.dataset.word);
-      u.lang='en-US'; u.rate=0.9; speechSynthesis.speak(u);
+    function showWordMeaning(el) {
+      const popup = document.getElementById('wordPopup');
+      document.getElementById('wordPopupWord').textContent = el.dataset.word;
+      document.getElementById('wordPopupMeaning').textContent = el.dataset.meaning;
+      popup.classList.add('show');
     }
+    function closeWordPopup() {
+      document.getElementById('wordPopup').classList.remove('show');
+    }
+    document.getElementById('wordPopup').addEventListener('click', e => { if(e.target===e.currentTarget) closeWordPopup(); });
     function speakCard(el,word,meaning) {
       el.classList.add('speaking');
       const u=new SpeechSynthesisUtterance(word);

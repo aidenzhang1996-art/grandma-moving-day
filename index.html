@@ -167,6 +167,8 @@
     }
     .vocab-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(40,170,220,0.15); border-color:var(--blue); }
     .vocab-card.speaking { border-color:var(--blue); box-shadow:0 0 0 3px rgba(40,170,220,0.2); }
+    .flash { animation: flashAnim 0.6s; }
+    @keyframes flashAnim { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
     .vocab-card .speak-icon { position:absolute; top:4px; right:6px; font-size:12px; opacity:0; transition:opacity 0.2s; }
     .vocab-card.speaking .speak-icon { opacity:1; }
     .vocab-card .word { font-size:14px; font-weight:700; color:var(--blue); margin-bottom:2px; }
@@ -364,15 +366,50 @@
       document.getElementById('wordPopup').classList.remove('show');
     }
     document.getElementById('wordPopup').addEventListener('click', e => { if(e.target===e.currentTarget) closeWordPopup(); });
-    function speakCard(el,word,meaning) {
+    // ========== 发音方案：在线TTS优先，speechSynthesis兜底 ==========
+    const pronPlayer = document.createElement('audio');
+    pronPlayer.style.display = 'none';
+    pronPlayer.preload = 'auto';
+    document.body.appendChild(pronPlayer);
+
+    function speakWord(word, el) {
+      // 视觉反馈
+      if (el) { el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 600); }
+      const sources = [
+        'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(word) + '&type=2',
+        'https://fanyi.baidu.com/gettts?lan=en&text=' + encodeURIComponent(word) + '&spd=slow&source=web',
+        'https://translate.googleapis.com/translate_tts?ie=UTF-8&tl=en&client=t&spokenTextKey=1&q=' + encodeURIComponent(word)
+      ];
+      let idx = 0;
+      function tryNext() {
+        if (idx >= sources.length) {
+          if ('speechSynthesis' in window) {
+            const u = new SpeechSynthesisUtterance(word);
+            u.lang = 'en-US'; u.rate = 0.8;
+            speechSynthesis.speak(u);
+          }
+          return;
+        }
+        pronPlayer.pause();
+        pronPlayer.src = sources[idx];
+        pronPlayer.load();
+        const timeout = setTimeout(() => { idx++; tryNext(); }, 3000);
+        pronPlayer.oncanplay = function() {
+          clearTimeout(timeout);
+          pronPlayer.play().catch(() => { clearTimeout(timeout); idx++; tryNext(); });
+        };
+        pronPlayer.onerror = function() { clearTimeout(timeout); idx++; tryNext(); };
+      }
+      tryNext();
+    }
+
+    function speakCard(el, word, meaning) {
       el.classList.add('speaking');
-      const u=new SpeechSynthesisUtterance(word);
-      u.lang='en-US'; u.rate=0.9;
-      u.onend=()=>el.classList.remove('speaking');
-      speechSynthesis.speak(u);
-      if(!window.matchMedia('(hover:hover)').matches){
-        document.getElementById('modalWord').textContent=word;
-        document.getElementById('modalMeaning').textContent=meaning;
+      speakWord(word, el);
+      setTimeout(() => el.classList.remove('speaking'), 1500);
+      if (!window.matchMedia('(hover:hover)').matches) {
+        document.getElementById('modalWord').textContent = word;
+        document.getElementById('modalMeaning').textContent = meaning;
         document.getElementById('modal').classList.add('show');
       }
     }
